@@ -1,9 +1,9 @@
-from enum import Enum 
+from enum import Enum
 from chunking import chunk_text, clean_chunk, create_audio_chunks
 import llm_engine as Ai_eg
 import tempfile
 import audio_generation as ag
-from exceptions import *   
+from exceptions import *
 
 class PipelineState(Enum):
     IDLE = "idle"
@@ -39,7 +39,7 @@ class PodcastPipeline:
     def generate_script(self,on_progress=None):
         if self.state != PipelineState.GENERATING_SCRIPT:
             raise RuntimeError(f"Cannot generate script from state: {self.state}")
-        
+
         previous_context = ""
         for index, chunk in enumerate(self.chunks):
             current_index= index + 1
@@ -49,7 +49,7 @@ class PodcastPipeline:
                 generated_script = Ai_eg.request_transmission(previous_context+chunk)
                 self.full_podcast_script += generated_script
                 previous_context = generated_script[-150:]
-            
+
             except Exception as e:
                 self.state = PipelineState.FAILED
                 self.last_error = f"Script generation failed on section {index + 1}: {e}"
@@ -59,7 +59,7 @@ class PodcastPipeline:
     def generate_audio(self, select_model, on_progress = None):
         if self.state != PipelineState.SCRIPT_READY:
             raise RuntimeError(f"Cannot generate audio from state: {self.state}")
-        
+
         else:
             self.state = PipelineState.GENERATING_AUDIO
             try:
@@ -74,15 +74,16 @@ class PodcastPipeline:
                             on_progress(current_index, len(audio_chunks))
                         audio_package = ag.generate_studio_audio(
                             tem_dir,
-                            audio_chunk, 
+                            audio_chunk,
                             select_model,
-                            tts_service, 
+                            tts_service,
                             index
                         )
 
-                        complete_audio = ag.export_the_audio(audio_package,index)
+                    complete_audio = ag.export_the_audio(tem_dir, audio_chunks)
                     self.final_audio_bytes = complete_audio
                 self.state = PipelineState.DONE
+                return self.final_audio_bytes
 
             except Exception as e:
                 self.state = PipelineState.FAILED
