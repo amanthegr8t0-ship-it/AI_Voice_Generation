@@ -24,7 +24,7 @@ tab_podcast, tab_audio_podcast = st.tabs(["🎙️ PDF To Podcast", "✍️ Text
 with tab_audio_podcast:
 
     user_input = st.text_area("Enter your prompt")
-    
+
 
     if st.button("Send"):
 
@@ -34,15 +34,16 @@ with tab_audio_podcast:
 
         else:
             pipeline = PodcastPipeline(user_input)
-            pipeline.initialize_pipeline()
+            pipeline.full_podcast_script = user_input
+            pipeline.state = PipelineState.SCRIPT_READY
+
             progress_bar_2 = st.progress(0)
             status_text_2 = st.empty()
             def update_progress_tts(current, total):
                 progress_bar_2.progress(current / total)
                 status_text_2.write(f"🎧 Generating audio {current} of {total}")
-            pipeline.generate_script(on_progress=update_progress_tts)
 
-            final_text_to_audio = pipeline.generate_audio(select_model)
+            final_text_to_audio = pipeline.generate_audio(select_model, on_progress=update_progress_tts)
 
             if final_text_to_audio is not None:
                 st.subheader("Download Audio")
@@ -84,7 +85,7 @@ with tab_podcast:
                 progress_bar.progress(current/total)
                 status_text.write(f"Generating the Audio {current} section of {total}")
             try:
-                
+
                 pipeline.initialize_pipeline()
                 pipeline.generate_script(on_progress=update_script_ui)
 
@@ -99,10 +100,10 @@ with tab_podcast:
             except Exception as e:
                 st.error(f"Pipeline Halted : {str(e)}")
                 st.stop()
-                
+
 
             if pipeline.state == PipelineState.DONE:
-                
+
                 st.subheader("Download Audio")
                 st.audio(pipeline.final_audio_bytes)
                 st.success("Podcast Generated Successfully!")
