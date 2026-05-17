@@ -2,6 +2,7 @@ from fastapi import FastAPI, Response, HTTPException
 from pydantic import BaseModel
 from controllers import podcast_controller as pc
 from core.exceptions import ConfigurationError, AudioGenerationError, ScriptGenerationError
+import asyncio
 
 app = FastAPI()
 class PodcastRequest(BaseModel):
@@ -9,9 +10,9 @@ class PodcastRequest(BaseModel):
     model : str
 
 @app.post("/generate-text-to-speech")
-def generate_tts(request: PodcastRequest):
+async def generate_tts(request: PodcastRequest):
     try:
-        output = pc.generate_text_to_speech(request.text, request.model)
+        output =await asyncio.to_thread( pc.generate_text_to_speech, request.text, request.model)
         return Response(content=output, media_type="audio/mpeg")
     except ConfigurationError:
         raise HTTPException (status_code= 500, detail="Something went wrong while connecting the server")
@@ -22,9 +23,9 @@ def generate_tts(request: PodcastRequest):
 
 
 @app.post("/generate-pdf-to-podcast")
-def generate_podcast(request: PodcastRequest):
+async def generate_podcast(request: PodcastRequest):
     try:
-        output = pc.generate_pdf_to_podcast(request.text, request.model)
+        output =await asyncio.to_thread( pc.generate_pdf_to_podcast, request.text, request.model)
         return Response(content=output, media_type="audio/mpeg")
     except ScriptGenerationError:
         raise HTTPException (status_code= 500, detail="Something went wrong while generating script")
