@@ -29,4 +29,4 @@ TEMPERATURE = 0.5
 MAX_TOKEN = 500
 CONTEXT_SIZE = 150
 VOICE_OPTION = ["Jason","Aria"]
-FASTAPI_URL = os.getenv("FASTAPI_URL", "http://127.0.0.1:8000")
+FASTAPI_URL = os.getenv("FASTAPI_URL", "https://fantasto-bargh.onrender.com")
