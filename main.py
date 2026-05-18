@@ -2,6 +2,7 @@
 import streamlit as st
 from core.config import VOICE_OPTION, FASTAPI_URL
 import requests
+import time
 
 st.set_page_config(
     page_title="PDF To Podcast AI",
@@ -30,7 +31,18 @@ with tab_audio_podcast:
                 if response.status_code != 200:
                     st.error(response.json()["detail"])
                     st.stop()
-                audio_bytes = response.content
+                job_id = response.json()["job_id"]
+                while True:
+                    status_response = requests.get(f"{FASTAPI_URL}/job/tts/{job_id}")
+
+                    if status_response.headers["content-type"] == "audio/mpeg":
+                        audio_bytes = status_response.content
+                        break
+
+                    status = status_response.json()["status"]
+                    st.write(f"Status : {status}")
+                    time.sleep(3)
+                
 
             except Exception as e:
                 st.error("Something unexpected went wrong. Please try again.")
@@ -75,7 +87,17 @@ with tab_podcast:
                 if response.status_code != 200:
                     st.error(response.json()["detail"])
                     st.stop()
-                audio_bytes2 = response.content
+                job_id2 = response.json()["job_id"]
+                while True:
+                    status_response = requests.get(f"{FASTAPI_URL}/job/podcast/{job_id2}")
+
+                    if status_response.headers["content-type"] == "audio/mpeg":
+                        audio_bytes2 = status_response.content
+                        break
+
+                    status = status_response.json()["status"]
+                    st.write(f"Status : {status}")
+                    time.sleep(3)
 
             except Exception as e:
                 st.error("Something unexpected went wrong. Please try again.")
